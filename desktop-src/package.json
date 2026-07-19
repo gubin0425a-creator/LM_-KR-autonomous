@@ -1,0 +1,41 @@
+{
+  "name": "infinite-desktop",
+  "version": "1.0.0",
+  "main": "main.js",
+  "description": "Infinite Desktop App",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.gubin.infinite",
+    "productName": "Infinite",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../index.html",
+      "../brand-icon-1024.png",
+      "../brand-logo-cropped.png"
+    ],
+    "win": {
+      "target": "nsis",
+      "artifactName": "Infinite-Setup.${ext}"
+    },
+    "mac": {
+      "target": "dmg",
+      "artifactName": "Infinite-mac-${arch}.${ext}"
+    },
+    "linux": {
+      "target": "deb",
+      "artifactName": "Infinite-linux-${arch}.${ext}"
+    }
+  }
+}

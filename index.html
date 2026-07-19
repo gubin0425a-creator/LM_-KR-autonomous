@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Infinite</title>
+  <meta name="description" content="Infinite — installable chat app powered by OpenRouter" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Infinite" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./brand-icon-1024.png" type="image/png" />
+  <link rel="shortcut icon" href="./favicon-32.png" type="image/png" />
+  <link rel="apple-touch-icon" href="./brand-icon-1024.png" />
+  <style>
+    :root {
+      --bg: #080b13;
+      --bg2: #121826;
+      --panel: rgba(16, 22, 34, 0.84);
+      --panel-soft: rgba(16, 22, 34, 0.64);
+      --line: rgba(197, 213, 230, 0.10);
+      --line-strong: rgba(197, 213, 230, 0.18);
+      --text: #f8fafc;
+      --muted: #afbdd1;
+      --muted-2: #8da1ba;
+      --blue: #6fd7ff;
+      --cyan: #67b8ff;
+      --pink: #ff6bd8;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --red: #ff6a5d;
+      --shadow: 0 22px 70px rgba(0,0,0,.42);
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 28% 20%, rgba(111,215,255,.16), transparent 20%),
+        radial-gradient(circle at 72% 26%, rgba(255,107,216,.14), transparent 22%),
+        radial-gradient(circle at 78% 46%, rgba(255,106,93,.10), transparent 18%),
+        linear-gradient(180deg, #151a24 0%, #0b1019 46%, #060911 100%);
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    button, input, textarea, select { font: inherit; }
+    .app {
+      width: min(1280px, calc(100% - 16px));
+      margin: 8px auto;
+      min-height: calc(100vh - 16px);
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 12px;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      background:
+        radial-gradient(circle at top center, rgba(197,213,230,.08), transparent 22%),
+        linear-gradient(180deg, rgba(23, 29, 41, .96), rgba(8, 11, 19, .94));
+      border-radius: 26px;
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.05);
+      backdrop-filter: blur(18px);
+      min-height: 0;
+    }
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: calc(100vh - 16px);
+    }
+    .sidebar-head {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: rgba(5, 12, 23, .28);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: block;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      flex: 0 0 auto;
+      overflow: hidden;
+      background: transparent;
+    }
+    .brand-mark img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      border-radius: 12px;
+    }
+    .brand-title {
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -.05em;
+      line-height: 1.05;
+    }
+    .brand-sub {
+      display: none;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .meta-card {
+      padding: 12px 13px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .meta-card .label {
+      color: #b7e9ff;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .meta-card .value {
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: -.03em;
+    }
+    .meta-card .desc {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .row, .stack { display: flex; gap: 10px; }
+    .stack { flex-direction: column; }
+    .btn {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 800;
+      white-space: nowrap;
+      transition: transform .15s ease, opacity .15s ease, background .15s ease, border-color .15s ease;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:disabled { opacity: .56; cursor: not-allowed; transform: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--blue), var(--pink) 60%, var(--red)); color: white; box-shadow: 0 10px 24px rgba(255,107,216,.16); }
+    .btn-soft { background: rgba(255,255,255,.07); color: white; border: 1px solid rgba(255,255,255,.10); }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid rgba(255,255,255,.08); }
+    .btn-danger { background: rgba(244,63,94,.08); color: #ffd7e1; border: 1px solid rgba(244,63,94,.16); }
+    .btn.full { width: 100%; }
+
+    .search-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .search-wrap input, .search-wrap textarea, .search-wrap select, .name-editor input, .field input, .field textarea, .field select {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+    }
+    .search-wrap select,
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      color-scheme: dark;
+      background-color: #162235;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(255,255,255,.85) 50%),
+        linear-gradient(135deg, rgba(255,255,255,.85) 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 2px),
+        calc(100% - 12px) calc(50% - 2px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
+    }
+    .search-wrap select option,
+    .field select option {
+      background: #0f172a;
+      color: #f8fafc;
+    }
+    .search-wrap input::placeholder, textarea::placeholder, .field textarea::placeholder, .field input::placeholder {
+      color: #8294ae;
+    }
+    .search-help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .app-list {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .app-item {
+      width: 100%;
+      text-align: left;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .app-item:hover { border-color: rgba(96,165,250,.26); }
+    .app-item.active {
+      background: linear-gradient(180deg, rgba(103,184,255,.16), rgba(255,107,216,.08));
+      border-color: rgba(111,215,255,.26);
+      box-shadow: inset 0 0 0 1px rgba(111,215,255,.10), 0 0 30px rgba(255,107,216,.06);
+    }
+    .app-item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .app-item-title {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: -.03em;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+    .app-item-preview {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: 39px;
+    }
+    .app-item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted-2);
+      font-size: 11px;
+    }
+    .tag {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.08);
+      color: #d7e8ff;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .tag.archive { color: #fde68a; border-color: rgba(251,191,36,.18); background: rgba(251,191,36,.08); }
+    .tag.restore { color: #a7f3d0; border-color: rgba(52,211,153,.18); background: rgba(52,211,153,.08); }
+    .empty-list {
+      padding: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+
+    .chat-shell {
+      height: calc(100vh - 16px);
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      overflow: hidden;
+      position: relative;
+    }
+    .mobile-sidebar-toggle { display: none; }
+    .chat-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(5, 12, 23, .28);
+      flex-wrap: wrap;
+    }
+    .chat-topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .current-app {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .current-app-title {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: -.04em;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .current-app-meta {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-topbar-right {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .status-banner {
+      margin: 12px 14px 0;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      display: none;
+    }
+    .status-banner.show { display: block; }
+    .status-banner.warn { color: #fef3c7; border-color: rgba(251,191,36,.18); background: rgba(251,191,36,.07); }
+    .status-banner.error { color: #ffd7e1; border-color: rgba(244,63,94,.18); background: rgba(244,63,94,.07); }
+    .chat-area {
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      padding: 16px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+      scrollbar-gutter: stable;
+    }
+    .empty-chat {
+      margin: auto;
+      width: min(780px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      text-align: left;
+    }
+    .empty-hero {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(34,211,238,.08), rgba(255,255,255,.02));
+      border-radius: 24px;
+      padding: 24px;
+    }
+    .empty-hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 48px);
+      line-height: 1.04;
+      letter-spacing: -.05em;
+    }
+    .empty-hero p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .status-pill {
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 13px;
+      color: #e4edf8;
+    }
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .quick {
+      text-align: left;
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor: pointer;
+      color: var(--text);
+    }
+    .quick strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 16px;
+      letter-spacing: -.03em;
+    }
+    .quick span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .message {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      max-width: 100%;
+    }
+    .message.user { justify-content: flex-end; }
+    .bubble-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      max-width: min(920px, 100%);
+    }
+    .message.user .bubble-wrap { flex-direction: row-reverse; }
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+      flex: 0 0 auto;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .message.user .avatar {
+      background: rgba(37,99,235,.2);
+      border-color: rgba(96,165,250,.22);
+    }
+    .bubble {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.045);
+      color: #edf5ff;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+    .message.user .bubble {
+      background: linear-gradient(135deg, rgba(103,184,255,.18), rgba(255,107,216,.12) 60%, rgba(255,106,93,.10));
+      border-color: rgba(111,215,255,.24);
+    }
+    .meta {
+      margin-top: 6px;
+      color: var(--muted-2);
+      font-size: 12px;
+    }
+    .message.user .meta { text-align: right; }
+    .typing {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      min-height: 22px;
+    }
+    .typing span {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #cfe7ff;
+      opacity: .45;
+      animation: blink 1s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .15s; }
+    .typing span:nth-child(3) { animation-delay: .3s; }
+    @keyframes blink {
+      0%, 80%, 100% { opacity: .35; transform: translateY(0); }
+      40% { opacity: 1; transform: translateY(-2px); }
+    }
+    .composer {
+      position: sticky;
+      bottom: 0;
+      z-index: 3;
+      border-top: 1px solid var(--line);
+      padding: 14px 16px 16px;
+      background: rgba(5, 12, 23, .92);
+      backdrop-filter: blur(14px);
+    }
+    .composer-shell {
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(15,23,42,.78);
+      border-radius: 22px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .composer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .composer-note { color: var(--muted); font-size: 13px; }
+    .composer-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .composer textarea {
+      width: 100%;
+      min-height: 110px;
+      max-height: 240px;
+      resize: vertical;
+      background: transparent;
+      color: var(--text);
+      border: 0;
+      outline: none;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+    .error-box {
+      color: #ffd5de;
+      background: rgba(244,63,94,.08);
+      border: 1px solid rgba(244,63,94,.16);
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 13px;
+      display: none;
+    }
+    .error-box.show { display: block; }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2,6,23,.56);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+      z-index: 40;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(440px, 100%);
+      height: 100%;
+      border-left: 1px solid var(--line-strong);
+      background: linear-gradient(180deg, rgba(8, 15, 28, .98), rgba(11, 18, 32, .96));
+      box-shadow: -20px 0 60px rgba(0,0,0,.28);
+      transform: translateX(104%);
+      transition: transform .22s ease;
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+    }
+    .sheet.open { transform: translateX(0); }
+    .sheet-head {
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .sheet-head h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -.04em;
+    }
+    .sheet-body {
+      min-height: 0;
+      overflow: auto;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.03);
+    }
+    .field label {
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #b6e8ff;
+      font-weight: 800;
+    }
+    .field p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .field textarea {
+      min-height: 110px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      padding: 12px 14px;
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+    }
+    .model-helper-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .model-suggestion-list,
+    .saved-model-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .model-suggestion-empty {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      padding: 2px 2px 0;
+    }
+    .model-suggestion-group {
+      color: #b7e9ff;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 800;
+      padding: 2px 2px 0;
+    }
+    .model-suggestion {
+      width: 100%;
+      text-align: left;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .model-suggestion small {
+      color: var(--muted-2);
+      font-size: 11px;
+      flex: 0 0 auto;
+    }
+    .saved-model-list {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+    .saved-model-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.05);
+      color: #e4efff;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .saved-model-chip button {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      font-size: 13px;
+      line-height: 1;
+    }
+    .inline-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .downloads-mini {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .downloads-mini a {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      padding: 0 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: center;
+      text-decoration: none;
+    }
+    .notice {
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(37,99,235,.08);
+      border: 1px solid rgba(96,165,250,.18);
+      color: #d9ebff;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .mobile-sidebar-backdrop {
+      display: none;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        width: min(100% - 12px, 1280px);
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        position: fixed;
+        inset: 6px auto 6px 6px;
+        width: min(360px, calc(100vw - 20px));
+        transform: translateX(-108%);
+        transition: transform .22s ease;
+        z-index: 60;
+        min-height: calc(100vh - 12px);
+      }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(2,6,23,.56);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .18s ease;
+        z-index: 55;
+        display: block;
+      }
+      .mobile-sidebar-backdrop.open { opacity: 1; pointer-events: auto; }
+      .mobile-sidebar-toggle { display: inline-flex; }
+      .chat-shell { height: calc(100vh - 12px); min-height: 0; }
+      .quick-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .chat-topbar, .sidebar-head { padding: 14px; }
+      .chat-area { padding: 14px 14px 20px; }
+      .composer { padding: 12px; }
+      .composer-top { flex-direction: column; align-items: flex-start; }
+      .chat-topbar { align-items: flex-start; }
+      .chat-topbar-right, .composer-actions, .inline-actions { width: 100%; }
+      .chat-topbar-right .btn, .composer-actions .btn, .inline-actions .btn { flex: 1 1 auto; }
+      .downloads-mini { grid-template-columns: 1fr; }
+      .meta-grid { grid-template-columns: 1fr; }
+      .row { flex-direction: column; }
+      .btn.full-mobile, .downloads-mini a { width: 100%; }
+    }
+
+    .image-preview-item {
+      position: relative;
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+    }
+    .image-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .image-preview-item .remove-btn {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      background: rgba(239, 68, 68, 0.85);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      font-size: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      padding: 0;
+    }
+    .mic-btn-recording {
+      background: rgba(239, 68, 68, 0.2) !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+      color: #f87171 !important;
+      animation: mic-pulse 1.5s infinite;
+    }
+    @keyframes mic-pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-sidebar-backdrop" id="mobileSidebarBackdrop"></div>
+
+  <div class="app">
+    <aside class="panel sidebar" id="sidebar">
+      <div class="sidebar-head">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"><img src="./brand-logo-cropped.png" alt="Infinite logo" /></div>
+          <div>
+            <div class="brand-title">Infinite</div>
+            <div class="brand-sub"></div>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="label">무료 앱 한도</div>
+            <div class="value" id="limitValue">5</div>
+            <div class="desc" id="limitDesc">모바일 5개 / PC 1000개</div>
+          </div>
+          <div class="meta-card">
+            <div class="label">현재 저장 앱</div>
+            <div class="value" id="appCountValue">0</div>
+            <div class="desc">로컬에 저장된 채팅 앱 수</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn-primary full" id="createAppBtn" type="button">새 앱 만들기</button>
+          <button class="btn btn-soft full" id="installBtn" type="button">앱 설치</button>
+        </div>
+
+        <div class="search-wrap">
+          <input id="searchInput" type="text" placeholder="앱 이름 / 날짜(2026-07-19, 2026년 7월 19일) / 대화 일부 검색" />
+          <div class="search-help">
+            마지막 채팅 날짜, 앱 이름, 대화 일부 내용을 검색해서 이어서 열 수 있습니다. 긴 대화도 검색용 텍스트를 함께 저장합니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="app-list" id="appList"></div>
+    </aside>
+
+    <main class="panel chat-shell">
+      <div class="chat-topbar">
+        <div class="chat-topbar-left">
+          <button class="btn btn-ghost mobile-sidebar-toggle" id="openSidebarBtn" type="button">앱 목록</button>
+          <div class="current-app">
+            <div class="current-app-title" id="currentAppTitle">앱 없음</div>
+            <div class="current-app-meta" id="currentAppMeta">새 앱을 만들거나 기존 앱을 선택하세요.</div>
+          </div>
+        </div>
+        <div class="chat-topbar-right">
+          <button class="btn btn-soft" id="renameAppBtn" type="button">이름 변경</button>
+          <button class="btn btn-soft" id="newChatBtn" type="button">현재 앱 새 대화</button>
+          <button class="btn btn-soft" id="shareChatBtn" type="button" title="대화 공유">📤 공유</button>
+          <button class="btn btn-ghost" id="openSettingsBtn" type="button">설정</button>
+        </div>
+      </div>
+
+      <div class="status-banner" id="statusBanner"></div>
+
+      <div class="chat-area" id="chatArea">
+        <div class="empty-chat" id="emptyState">
+          <div class="empty-hero">
+            <h1>대화창 중심으로 유지하면서, 앱 단위 저장을 붙였습니다.</h1>
+            <p>
+              모바일은 <strong>무료 5개 앱</strong>, PC는 <strong>최대 1000개 앱</strong>까지 만들고 다시 불러올 수 있습니다.
+              마지막 채팅 날짜로도 검색되고, 대화 내용 일부로도 검색됩니다. 72시간 지난 대화는 자동 최적화되고, 다시 들어오면 복원해서 이어서 사용할 수 있습니다.
+            </p>
+            <div class="status-row">
+              <div class="status-pill" id="devicePill">기기 확인 중…</div>
+              <div class="status-pill" id="modelPill">기본 모델: openrouter/auto</div>
+              <div class="status-pill">채팅 전용 UI</div>
+            </div>
+          </div>
+          <div class="quick-grid">
+            <button class="quick" type="button" data-prompt="내 서비스용 랜딩페이지 구조를 잡아줘. hero, feature, faq, pricing까지 한국어로 써줘.">
+              <strong>랜딩페이지 초안 만들기</strong>
+              <span>서비스 소개, 기능, FAQ, CTA까지 한 번에 받아보기</span>
+            </button>
+            <button class="quick" type="button" data-prompt="내 앱 아이디어를 MVP로 줄여줘. 필수 기능과 나중 기능을 분리해서 알려줘.">
+              <strong>MVP 기획 정리</strong>
+              <span>무엇부터 만들지 우선순위를 간단히 정리</span>
+            </button>
+            <button class="quick" type="button" data-prompt="OpenRouter를 쓰는 채팅앱의 초기 시스템 프롬프트를 한국어로 만들어줘. 제품 기획, 코딩, QA 모드까지 포함해줘.">
+              <strong>시스템 프롬프트 만들기</strong>
+              <span>내 앱 성격에 맞는 assistant 규칙 초안 생성</span>
+            </button>
+            <button class="quick" type="button" data-prompt="이 앱을 GitHub Pages와 PWA로 배포할 때 필요한 체크리스트를 단계별로 써줘.">
+              <strong>배포 체크리스트 받기</strong>
+              <span>GitHub Pages, PWA, 아이콘, 설치 테스트까지 정리</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="composer-shell">
+          <div class="composer-top">
+            <div class="composer-note" id="composerNote">OpenRouter API 키를 저장하면 바로 대화할 수 있습니다.</div>
+            <div class="composer-actions">
+              <input type="file" id="imageInput" accept="image/*" style="display:none" />
+              <button class="btn btn-ghost" id="attachBtn" type="button" title="이미지 첨부">📎</button>
+              <button class="btn btn-ghost" id="micBtn" type="button" title="음성 인식 시작">🎤</button>
+              <button class="btn btn-ghost" id="copyConfigBtn" type="button">기본 설정 복사</button>
+              <button class="btn btn-soft" id="downloadConfigBtn" type="button">opencode.jsonc 다운로드</button>
+              <button class="btn btn-primary" id="sendBtn" type="button">전송</button>
+            </div>
+          </div>
+          <div id="imagePreviewContainer" style="display:none; padding: 8px 12px; display: flex; gap: 8px; flex-wrap: wrap; background: rgba(0,0,0,0.15); border-radius: 12px; margin-bottom: 4px;"></div>
+          <div class="error-box" id="errorBox"></div>
+          <textarea id="promptInput" placeholder="메시지를 입력하세요. Enter 전송 / Shift+Enter 줄바꿈"></textarea>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="sheet-backdrop" id="sheetBackdrop"></div>
+  <aside class="sheet" id="settingsSheet" aria-hidden="true">
+    <div class="sheet-head">
+      <h2>설정</h2>
+      <button class="btn btn-ghost" id="closeSettingsBtn" type="button">닫기</button>
+    </div>
+    <div class="sheet-body">
+      <div class="field">
+        <label for="apiKeyInput">OpenRouter API Key</label>
+        <input id="apiKeyInput" type="password" placeholder="새 키를 다시 적을 때만 변경됩니다" autocomplete="off" />
+        <div class="inline-actions">
+          <button class="btn btn-soft" id="verifyKeyBtn" type="button">키 확인</button>
+          <button class="btn btn-ghost" id="clearKeyBtn" type="button">저장 키 삭제</button>
+        </div>
+        <p id="apiKeyHint">키를 한 번 저장하면 업데이트 후에도 유지됩니다. 입력칸을 비워두고 저장하면 기존 키를 그대로 유지합니다.</p>
+      </div>
+
+      <div class="field">
+        <label for="modelSelect">기본 모델</label>
+        <select id="modelSelect">
+          <option value="openrouter/auto">openrouter/auto · 오토라우터 기본</option>
+          <option value="anthropic/claude-opus-4.8">anthropic/claude-opus-4.8 · 최고 품질</option>
+          <option value="anthropic/claude-opus-4.7">anthropic/claude-opus-4.7 · 에이전트 코딩</option>
+          <option value="openai/gpt-5.5-pro">openai/gpt-5.5-pro · 복잡 논리/추론</option>
+          <option value="google/gemini-3.1-pro-preview">google/gemini-3.1-pro-preview · 가성비</option>
+          <option value="anthropic/claude-sonnet-4.6">anthropic/claude-sonnet-4.6 · 일상 개발</option>
+          <option value="deepseek/deepseek-v4-pro">deepseek/deepseek-v4-pro · 저비용/고성능</option>
+          <option value="x-ai/grok-4.3">x-ai/grok-4.3 · 실시간 정보 병행</option>
+        </select>
+        <input id="customModelInput" type="text" placeholder="직접 입력할 모델 ID를 쓰고 Enter (추가 모델 최대 8개)" />
+        <div class="model-helper-row">
+          <button class="btn btn-soft" id="useAutoRouterBtn" type="button">오토라우터 기본 사용</button>
+        </div>
+        <div class="saved-model-list" id="savedModelList"></div>
+        <div class="model-suggestion-list" id="modelSuggestionList"></div>
+        <p>여기에는 기본 모델 목록 + 직접 추가한 최대 8개 모델이 같이 보입니다. 아무것도 안 고르면 오토라우터가 기본입니다.</p>
+      </div>
+
+      <div class="field">
+        <label for="systemPromptInput">시스템 프롬프트</label>
+        <textarea id="systemPromptInput" placeholder="비워두면 기본 코딩/앱 제작 모드가 적용됩니다"></textarea>
+        <p>비워두면 일반 채팅이 아니라, 앱/게임/웹사이트 제작을 바로 도와주는 기본 빌더 프롬프트가 적용됩니다.</p>
+      </div>
+
+      <div class="field">
+        <label>모바일 특화 설정</label>
+        <div class="stack" style="gap: 10px; margin-top: 4px;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; color:var(--text); font-weight:normal; cursor:pointer;">
+            <input type="checkbox" id="hapticToggle" checked /> 햅틱 진동 피드백 활성화 (모바일)
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; text-transform:none; color:var(--text); font-weight:normal; cursor:pointer;">
+            <input type="checkbox" id="ttsAutoToggle" /> 답변 생성 완료 시 자동 읽기 (TTS)
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>데이터 백업 및 복원</label>
+        <div class="inline-actions">
+          <button class="btn btn-soft" id="exportDataBtn" type="button">데이터 백업 (JSON)</button>
+          <button class="btn btn-soft" id="importDataBtn" type="button">데이터 복원</button>
+          <input type="file" id="importFileInput" accept=".json" style="display:none" />
+        </div>
+        <p>로컬에 저장된 모든 대화와 설정 데이터를 하나의 JSON 백업 파일로 내보내거나 가져옵니다.</p>
+      </div>
+
+      <div class="field">
+        <label>인앱 디버깅 로그 콘솔</label>
+        <div id="debugConsoleLog" style="max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.4); border-radius: 12px; padding: 10px; font-family: monospace; font-size: 11px; color: #a7f3d0; border: 1px solid rgba(255,255,255,0.08); white-space: pre-wrap; margin-bottom: 8px;"></div>
+        <button class="btn btn-ghost full" id="clearLogsBtn" type="button">콘솔 로그 비우기</button>
+      </div>
+
+      <div class="field">
+        <label>빠른 동작</label>
+        <div class="inline-actions">
+          <button class="btn btn-primary" id="saveSettingsBtn" type="button">설정 저장</button>
+          <button class="btn btn-soft" id="copyModelBtn" type="button">현재 모델 복사</button>
+          <button class="btn btn-danger" id="clearAppBtn" type="button">현재 앱 삭제</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>데스크톱 다운로드</label>
+        <div class="downloads-mini">
+          <a href="https://github.com/gubin0425a-creator/LM_-KR-autonomous/releases/latest/download/Infinite-Setup.exe">Windows EXE</a>
+          <a href="https://github.com/gubin0425a-creator/LM_-KR-autonomous/releases/latest/download/Infinite-mac-arm64.dmg">macOS ARM DMG</a>
+          <a href="https://github.com/gubin0425a-creator/LM_-KR-autonomous/releases/latest/download/Infinite-mac-x64.dmg">macOS Intel DMG</a>
+          <a href="https://github.com/gubin0425a-creator/LM_-KR-autonomous/releases/latest/download/Infinite-linux-amd64.deb">Linux .deb</a>
+        </div>
+      </div>
+
+      <div class="notice">
+        <strong>2차창작 고지</strong><br />
+        이 앱은 <strong>OpenCode 기반 아이디어/구조를 참고한 독립 2차창작</strong>입니다.
+        OpenCode 팀이 만든 프로젝트가 아니며, OpenCode 팀과 제휴 또는 공식 관계가 없습니다.
+        앱 이름은 별도 브랜딩인 <strong>Infinite</strong>로 분리했습니다.
+      </div>
+    </div>
+  </aside>
+
+  <a id="hiddenDownload" style="display:none"></a>
+
+  <script>
+    const SETTINGS_KEY = 'nobincode-chat-settings-v2';
+    const UI_KEY = 'nobincode-chat-ui-v2';
+    const FALLBACK_APPS_KEY = 'nobincode-chat-apps-fallback-v2';
+    const DB_NAME = 'nobincode-chat-db-v2';
+    const STORE_NAME = 'apps';
+    const ARCHIVE_AFTER_HOURS = 72;
+    const MOBILE_LIMIT = 5;
+    const DESKTOP_LIMIT = 1000;
+    const DEFAULT_MODEL = 'openrouter/auto';
+    const DEFAULT_SYSTEM_PROMPT = [
+      'You are Infinite, a Korean-first software building assistant.',
+      'If the user asks to make an app, game, website, landing page, tool, script, or program, do not say you cannot build it.',
+      'Instead, immediately help by producing a working MVP, concrete code, file structure, implementation steps, and the next action.',
+      'Prefer code and actionable output over abstract explanation.',
+      'When the request is ambiguous, make a reasonable assumption and state it briefly, then continue building.',
+      'Only refuse requests that are clearly illegal, malicious, or unsafe.',
+      'Reply in Korean by default unless the user asks for another language.'
+    ].join(' ');
+    const DEFAULT_CONFIG = `{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/auto",
+  "small_model": "deepseek/deepseek-v4-pro"
+}`;
+
+    const BUILTIN_MODELS = [
+      'openrouter/auto',
+      'anthropic/claude-opus-4.8',
+      'anthropic/claude-opus-4.7',
+      'openai/gpt-5.5-pro',
+      'google/gemini-3.1-pro-preview',
+      'anthropic/claude-sonnet-4.6',
+      'deepseek/deepseek-v4-pro',
+      'x-ai/grok-4.3',
+    ];
+    const MAX_CUSTOM_MODELS = 8;
+
+    const initialSettings = {
+      apiKey: '',
+      model: DEFAULT_MODEL,
+      customModel: '',
+      customModels: [],
+      systemPrompt: '',
+      hapticEnabled: true,
+      ttsAutoRead: false,
+    };
+
+    let deferredPrompt = null;
+    let sending = false;
+    let dbPromise = null;
+    let storageMode = 'indexeddb';
+    let fallbackApps = [];
+    let appsCache = [];
+    let currentAppId = null;
+    let currentMessages = [];
+    let uiState = readJSON(UI_KEY, { currentAppId: null });
+    let settings = { ...initialSettings, ...readJSON(SETTINGS_KEY, {}) };
+    // Ensure fallback fields exist in loaded settings
+    if (settings.hapticEnabled === undefined) settings.hapticEnabled = true;
+    if (settings.ttsAutoRead === undefined) settings.ttsAutoRead = false;
+    settings.customModels = Array.from(new Set((settings.customModels || []).map((item) => String(item).trim()).filter(Boolean))).slice(0, MAX_CUSTOM_MODELS);
+
+    // Mobile feature states
+    let attachedImageBase64 = null;
+    let inAppLogs = [];
+    let recognition = null;
+
+    // DOM Elements
+    const createAppBtn = document.getElementById('createAppBtn');
+    const openSidebarBtn = document.getElementById('openSidebarBtn');
+    const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
+    const sidebar = document.getElementById('sidebar');
+    const installBtn = document.getElementById('installBtn');
+    const renameAppBtn = document.getElementById('renameAppBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const shareChatBtn = document.getElementById('shareChatBtn');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const clearAppBtn = document.getElementById('clearAppBtn');
+    const verifyKeyBtn = document.getElementById('verifyKeyBtn');
+    const clearKeyBtn = document.getElementById('clearKeyBtn');
+    const copyModelBtn = document.getElementById('copyModelBtn');
+    const copyConfigBtn = document.getElementById('copyConfigBtn');
+    const downloadConfigBtn = document.getElementById('downloadConfigBtn');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Mobile inputs
+    const attachBtn = document.getElementById('attachBtn');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const micBtn = document.getElementById('micBtn');
+
+    // Settings inputs
+    const hapticToggle = document.getElementById('hapticToggle');
+    const ttsAutoToggle = document.getElementById('ttsAutoToggle');
+    const exportDataBtn = document.getElementById('exportDataBtn');
+    const importDataBtn = document.getElementById('importDataBtn');
+    const importFileInput = document.getElementById('importFileInput');
+    const debugConsoleLog = document.getElementById('debugConsoleLog');
+    const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+    const searchInput = document.getElementById('searchInput');
+    const appList = document.getElementById('appList');
+    const appCountValue = document.getElementById('appCountValue');
+    const limitValue = document.getElementById('limitValue');
+    const limitDesc = document.getElementById('limitDesc');
+
+    const currentAppTitle = document.getElementById('currentAppTitle');
+    const currentAppMeta = document.getElementById('currentAppMeta');
+    const statusBanner = document.getElementById('statusBanner');
+    const chatArea = document.getElementById('chatArea');
+    const emptyState = document.getElementById('emptyState');
+    const promptInput = document.getElementById('promptInput');
+    const errorBox = document.getElementById('errorBox');
+    const devicePill = document.getElementById('devicePill');
+    const modelPill = document.getElementById('modelPill');
+    const composerNote = document.getElementById('composerNote');
+
+    const sheetBackdrop = document.getElementById('sheetBackdrop');
+    const sheet = document.getElementById('settingsSheet');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const apiKeyHint = document.getElementById('apiKeyHint');
+    const modelSelect = document.getElementById('modelSelect');
+    const customModelInput = document.getElementById('customModelInput');
+    const useAutoRouterBtn = document.getElementById('useAutoRouterBtn');
+    const savedModelList = document.getElementById('savedModelList');
+    const modelSuggestionList = document.getElementById('modelSuggestionList');
+    const systemPromptInput = document.getElementById('systemPromptInput');
+    const hiddenDownload = document.getElementById('hiddenDownload');
+
+    function readJSON(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeJSON(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+
+    function isMobileDevice() {
+      const ua = navigator.userAgent || '';
+      return /iphone|ipad|ipod|android/i.test(ua) || window.innerWidth <= 980;
+    }
+
+    function getAppLimit() {
+      return isMobileDevice() ? MOBILE_LIMIT : DESKTOP_LIMIT;
+    }
+
+    function getActiveModel() {
+      return (settings.customModel || '').trim() || settings.model || DEFAULT_MODEL;
+    }
+
+    function maskKey(key) {
+      const value = String(key || '').trim();
+      if (!value) return '저장된 키 없음';
+      if (value.length <= 12) return value;
+      return `${value.slice(0, 8)}••••${value.slice(-6)}`;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function showError(message) {
+      if (!message) {
+        errorBox.classList.remove('show');
+        errorBox.textContent = '';
+        return;
+      }
+      errorBox.classList.add('show');
+      errorBox.textContent = message;
+    }
+
+    function setStatus(message, tone = 'info') {
+      if (!message) {
+        statusBanner.className = 'status-banner';
+        statusBanner.textContent = '';
+        return;
+      }
+      statusBanner.className = 'status-banner show' + (tone === 'warn' ? ' warn' : tone === 'error' ? ' error' : '');
+      statusBanner.textContent = message;
+    }
+
+    function scrollToBottom() {
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function formatDate(ts) {
+      try {
+        return new Intl.DateTimeFormat('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        }).format(new Date(ts));
+      } catch {
+        return '';
+      }
+    }
+
+    function formatDateShort(ts) {
+      const d = new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function dateSearchVariants(ts) {
+      const d = new Date(ts);
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const day = d.getDate();
+      const mm = String(m).padStart(2, '0');
+      const dd = String(day).padStart(2, '0');
+      return [
+        `${y}-${mm}-${dd}`,
+        `${y}/${mm}/${dd}`,
+        `${y}.${mm}.${dd}`,
+        `${y}년 ${m}월 ${day}일`,
+        `${y} ${m} ${day}`,
+        `${y}-${m}-${day}`,
+      ].join(' ');
+    }
+
+    function limitText() {
+      return isMobileDevice() ? '모바일 무료 5개' : 'PC 최대 1000개';
+    }
+
+    function normalizeCustomModels(items) {
+      return Array.from(new Set((items || []).map((item) => String(item).trim()).filter(Boolean))).slice(0, MAX_CUSTOM_MODELS);
+    }
+
+    function getModelPool() {
+      return Array.from(new Set([...BUILTIN_MODELS, ...(settings.customModels || [])]));
+    }
+
+    function renderSavedModels() {
+      const models = settings.customModels || [];
+      if (!models.length) {
+        savedModelList.innerHTML = '';
+        return;
+      }
+      savedModelList.innerHTML = models.map((model) => `
+        <span class="saved-model-chip">
+          <span>${escapeHtml(model)}</span>
+          <button type="button" data-remove-model="${escapeHtml(model)}">✕</button>
+        </span>
+      `).join('');
+
+      savedModelList.querySelectorAll('[data-remove-model]').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          const value = button.getAttribute('data-remove-model');
+          if (!value) return;
+          settings.customModels = normalizeCustomModels((settings.customModels || []).filter((item) => item !== value));
+          if ((settings.customModel || '').trim() === value) settings.customModel = '';
+          writeJSON(SETTINGS_KEY, settings);
+          syncSettingsToForm();
+          setStatus(`'${value}' 모델을 목록에서 제거했습니다.`);
+        });
+      });
+    }
+
+    function renderModelSuggestions(query = customModelInput.value.trim()) {
+      const builtins = BUILTIN_MODELS;
+      const customs = settings.customModels || [];
+      const pool = getModelPool();
+      const lowered = query.toLowerCase();
+      const shouldOfferAdd = query && !pool.some((item) => item.toLowerCase() === lowered);
+
+      const builtinMatched = query ? builtins.filter((item) => item.toLowerCase().includes(lowered)) : builtins;
+      const customMatched = query ? customs.filter((item) => item.toLowerCase().includes(lowered)) : customs;
+      const parts = [];
+
+      if (shouldOfferAdd) {
+        parts.push(`
+          <button class="model-suggestion" type="button" data-model-action="add" data-model-value="${escapeHtml(query)}">
+            <span>${escapeHtml(query)}</span>
+            <small>Enter로 추가</small>
+          </button>
+        `);
+      }
+
+      if (builtinMatched.length) {
+        parts.push('<div class="model-suggestion-group">기본 모델</div>');
+        builtinMatched.forEach((item) => {
+          const isDefault = item === DEFAULT_MODEL;
+          parts.push(`
+            <button class="model-suggestion" type="button" data-model-action="select" data-model-value="${escapeHtml(item)}">
+              <span>${escapeHtml(item)}</span>
+              <small>${isDefault ? '기본값' : '기본'}</small>
+            </button>
+          `);
+        });
+      }
+
+      if (customMatched.length) {
+        parts.push('<div class="model-suggestion-group">추가 모델</div>');
+        customMatched.forEach((item) => {
+          parts.push(`
+            <button class="model-suggestion" type="button" data-model-action="select" data-model-value="${escapeHtml(item)}">
+              <span>${escapeHtml(item)}</span>
+              <small>추가됨</small>
+            </button>
+          `);
+        });
+      }
+
+      if (!parts.length) {
+        modelSuggestionList.innerHTML = '<div class="model-suggestion-empty">모델 ID를 입력하고 Enter를 누르면 목록에 추가됩니다.</div>';
+        return;
+      }
+
+      modelSuggestionList.innerHTML = parts.join('');
+      modelSuggestionList.querySelectorAll('[data-model-value]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const value = button.getAttribute('data-model-value') || '';
+          if (!value) return;
+          if (button.getAttribute('data-model-action') === 'add') {
+            addCustomModel(value, true);
+            return;
+          }
+          if (BUILTIN_MODELS.includes(value)) {
+            modelSelect.value = value;
+            customModelInput.value = '';
+            settings.customModel = '';
+            setStatus(`'${value}' 기본 모델을 선택했습니다. 저장하면 적용됩니다.`);
+            renderModelSuggestions('');
+            return;
+          }
+          customModelInput.value = value;
+          setStatus(`'${value}' 추가 모델을 선택했습니다. 저장하면 적용됩니다.`);
+          renderModelSuggestions(value);
+        });
+      });
+    }
+
+    function addCustomModel(value, selectAfter = true) {
+      const trimmed = String(value || '').trim();
+      if (!trimmed) return false;
+
+      const existing = normalizeCustomModels(settings.customModels || []);
+      const exactExists = existing.includes(trimmed);
+      if (!exactExists && existing.length >= MAX_CUSTOM_MODELS) {
+        setStatus(`사용자 추가 모델은 최대 ${MAX_CUSTOM_MODELS}개까지 저장할 수 있습니다.`, 'warn');
+        return false;
+      }
+
+      settings.customModels = exactExists ? existing : normalizeCustomModels([trimmed, ...existing]);
+      if (selectAfter) settings.customModel = trimmed;
+      writeJSON(SETTINGS_KEY, settings);
+      syncSettingsToForm();
+      setStatus(`'${trimmed}' 모델을 검색 목록에 추가했습니다.`);
+      return true;
+    }
+
+    function syncSettingsToForm() {
+      apiKeyInput.value = '';
+      apiKeyInput.placeholder = settings.apiKey ? `${maskKey(settings.apiKey)} · 다시 입력할 때만 변경` : '새 키를 다시 적을 때만 변경됩니다';
+      if (apiKeyHint) {
+        apiKeyHint.textContent = settings.apiKey
+          ? `저장된 키: ${maskKey(settings.apiKey)} · 입력칸을 비워두고 저장하면 유지됩니다.`
+          : '키를 한 번 저장하면 업데이트 후에도 유지됩니다. 입력칸을 비워두고 저장하면 기존 키를 그대로 유지합니다.';
+      }
+      modelSelect.value = BUILTIN_MODELS.includes(settings.model) ? settings.model : DEFAULT_MODEL;
+      customModelInput.value = settings.customModel || '';
+      systemPromptInput.value = settings.systemPrompt || '';
+      hapticToggle.checked = !!settings.hapticEnabled;
+      ttsAutoToggle.checked = !!settings.ttsAutoRead;
+      modelPill.textContent = '기본 모델: ' + getActiveModel();
+      composerNote.textContent = settings.apiKey
+        ? 'OpenRouter 연결 준비됨 · 모델: ' + getActiveModel() + ' · 빈 시스템 프롬프트면 기본 빌더 모드 적용'
+        : 'OpenRouter API 키를 저장하면 바로 대화할 수 있습니다.';
+      limitValue.textContent = String(getAppLimit());
+      limitDesc.textContent = '모바일 5개 / PC 1000개';
+      renderSavedModels();
+      renderModelSuggestions();
+    }
+
+    function openSheet() {
+      sheet.classList.add('open');
+      sheetBackdrop.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeSheet() {
+      sheet.classList.remove('open');
+      sheetBackdrop.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+
+    function openSidebar() {
+      if (window.innerWidth > 980) return;
+      sidebar.classList.add('open');
+      mobileSidebarBackdrop.classList.add('open');
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      mobileSidebarBackdrop.classList.remove('open');
+    }
+
+    function currentApp() {
+      return appsCache.find((item) => item.id === currentAppId) || null;
+    }
+
+    function appPreview(messages) {
+      const lastText = [...messages].reverse().find((item) => item.content && !item.pending)?.content || '';
+      return lastText.replace(/\s+/g, ' ').trim().slice(0, 120) || '아직 대화가 없습니다.';
+    }
+
+    function buildSearchText(app, messages) {
+      const joined = messages
+        .map((item) => `${item.role} ${item.content || ''}`)
+        .join(' ')
+        .toLowerCase()
+        .slice(0, 200000);
+      return [app.name, appPreview(messages), joined, dateSearchVariants(app.updatedAt)].join(' ').toLowerCase();
+    }
+
+    function makeAppName(index) {
+      return `앱 ${index}`;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToArrayBuffer(base64) {
+      const binary = atob(base64);
+      const len = binary.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes.buffer;
+    }
+
+    async function compressText(text) {
+      if (typeof CompressionStream === 'undefined') {
+        return { payloadType: 'json', payload: text };
+      }
+      const stream = new Blob([text]).stream().pipeThrough(new CompressionStream('gzip'));
+      const buffer = await new Response(stream).arrayBuffer();
+      return { payloadType: 'gzip-json', payload: arrayBufferToBase64(buffer) };
+    }
+
+    async function decompressPayload(app) {
+      if (app.payloadType !== 'gzip-json') return app.payload || '[]';
+      if (typeof DecompressionStream === 'undefined') return app.payload || '[]';
+      const buffer = base64ToArrayBuffer(app.payload || '');
+      const stream = new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'));
+      return await new Response(stream).text();
+    }
+
+    function shouldArchive(app) {
+      return Date.now() - (app.updatedAt || 0) > ARCHIVE_AFTER_HOURS * 60 * 60 * 1000;
+    }
+
+    function parseMessages(text) {
+      try {
+        const parsed = JSON.parse(text || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function readFallbackApps() {
+      try {
+        const raw = localStorage.getItem(FALLBACK_APPS_KEY);
+        if (!raw) return Array.isArray(fallbackApps) ? fallbackApps : [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) fallbackApps = parsed;
+        return Array.isArray(fallbackApps) ? fallbackApps : [];
+      } catch {
+        return Array.isArray(fallbackApps) ? fallbackApps : [];
+      }
+    }
+
+    function writeFallbackApps(items) {
+      fallbackApps = Array.isArray(items) ? items : [];
+      writeJSON(FALLBACK_APPS_KEY, fallbackApps);
+    }
+
+    function fallbackGetAll() {
+      return readFallbackApps().slice();
+    }
+
+    function fallbackGet(id) {
+      return readFallbackApps().find((item) => item.id === id) || null;
+    }
+
+    function fallbackPut(value) {
+      const items = readFallbackApps();
+      const index = items.findIndex((item) => item.id === value.id);
+      if (index >= 0) items[index] = value;
+      else items.push(value);
+      writeFallbackApps(items);
+      return value;
+    }
+
+    function fallbackDelete(id) {
+      writeFallbackApps(readFallbackApps().filter((item) => item.id !== id));
+      return true;
+    }
+
+    function openDB() {
+      if (storageMode === 'fallback') return Promise.reject(new Error('fallback storage active'));
+      if (dbPromise) return dbPromise;
+      dbPromise = new Promise((resolve, reject) => {
+        try {
+          if (typeof indexedDB === 'undefined') {
+            storageMode = 'fallback';
+            reject(new Error('IndexedDB unavailable'));
+            return;
+          }
+          const request = indexedDB.open(DB_NAME, 1);
+          request.onupgradeneeded = () => {
+            const db = request.result;
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            store.createIndex('updatedAt', 'updatedAt');
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => {
+            storageMode = 'fallback';
+            reject(request.error || new Error('IndexedDB open failed'));
+          };
+        } catch (error) {
+          storageMode = 'fallback';
+          reject(error);
+        }
+      });
+      return dbPromise;
+    }
+
+    async function dbGetAll() {
+      if (storageMode === 'fallback') return fallbackGetAll();
+      try {
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.getAll();
+          request.onsuccess = () => resolve(request.result || []);
+          request.onerror = () => reject(request.error);
+        });
+      } catch {
+        storageMode = 'fallback';
+        return fallbackGetAll();
+      }
+    }
+
+    async function dbGet(id) {
+      if (storageMode === 'fallback') return fallbackGet(id);
+      try {
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const request = store.get(id);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+      } catch {
+        storageMode = 'fallback';
+        return fallbackGet(id);
+      }
+    }
+
+    async function dbPut(value) {
+      if (storageMode === 'fallback') return fallbackPut(value);
+      try {
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          tx.objectStore(STORE_NAME).put(value);
+          tx.oncomplete = () => resolve(value);
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch {
+        storageMode = 'fallback';
+        return fallbackPut(value);
+      }
+    }
+
+    async function dbDelete(id) {
+      if (storageMode === 'fallback') return fallbackDelete(id);
+      try {
+        const db = await openDB();
+        return await new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          tx.objectStore(STORE_NAME).delete(id);
+          tx.oncomplete = () => resolve(true);
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch {
+        storageMode = 'fallback';
+        return fallbackDelete(id);
+      }
+    }
+
+    async function loadApps() {
+      appsCache = (await dbGetAll()).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+      appCountValue.textContent = String(appsCache.length);
+    }
+
+    async function persistApp(app, messages, options = {}) {
+      const now = Date.now();
+      const base = {
+        ...app,
+        updatedAt: options.keepUpdatedAt ? app.updatedAt : now,
+        lastOpenedAt: now,
+        messageCount: messages.length,
+        preview: appPreview(messages),
+      };
+      const json = JSON.stringify(messages);
+      const archived = shouldArchive(base) && !options.forcePlain;
+      const compressed = archived ? await compressText(json) : { payloadType: 'json', payload: json };
+      base.payloadType = compressed.payloadType;
+      base.payload = compressed.payload;
+      base.archived = archived;
+      base.archivedAt = archived ? now : null;
+      base.searchText = buildSearchText(base, messages);
+      await dbPut(base);
+      await loadApps();
+      return base;
+    }
+
+    async function createApp(name) {
+      const limit = getAppLimit();
+      if (appsCache.length >= limit) {
+        setStatus(`현재 기기에서는 무료로 ${limit}개까지 앱을 만들 수 있습니다.`, 'warn');
+        return null;
+      }
+      const now = Date.now();
+      const nextName = name || makeAppName(appsCache.length + 1);
+      const app = {
+        id: `app-${now}-${Math.random().toString(36).slice(2, 8)}`,
+        name: nextName,
+        createdAt: now,
+        updatedAt: now,
+        lastOpenedAt: now,
+        messageCount: 0,
+        preview: '아직 대화가 없습니다.',
+        archived: false,
+        archivedAt: null,
+        payloadType: 'json',
+        payload: '[]',
+        searchText: nextName.toLowerCase(),
+      };
+      await dbPut(app);
+      await loadApps();
+      return app;
+    }
+
+    async function renameCurrentApp() {
+      const app = currentApp();
+      if (!app) {
+        setStatus('먼저 앱을 하나 선택해 주세요.', 'warn');
+        return;
+      }
+      const nextName = prompt('앱 이름을 입력하세요.', app.name);
+      if (!nextName || !nextName.trim()) return;
+      app.name = nextName.trim();
+      app.searchText = buildSearchText(app, currentMessages);
+      await dbPut(app);
+      await loadApps();
+      renderAppList();
+      updateCurrentAppHeader();
+    }
+
+    async function clearCurrentChat() {
+      const app = currentApp();
+      if (!app) {
+        setStatus('먼저 앱을 하나 선택해 주세요.', 'warn');
+        return;
+      }
+      if (!confirm('현재 앱의 대화를 모두 비울까요? 앱 자체는 남습니다.')) return;
+      currentMessages = [];
+      await persistApp(app, currentMessages, { forcePlain: true });
+      renderHistory();
+      renderAppList();
+      setStatus('현재 앱 대화를 비웠습니다.');
+    }
+
+    async function deleteCurrentApp() {
+      const app = currentApp();
+      if (!app) {
+        setStatus('삭제할 앱이 없습니다.', 'warn');
+        return;
+      }
+      if (!confirm(`'${app.name}' 앱을 삭제할까요?`)) return;
+      await dbDelete(app.id);
+      currentAppId = null;
+      currentMessages = [];
+      uiState.currentAppId = null;
+      writeJSON(UI_KEY, uiState);
+      await loadApps();
+      if (appsCache[0]) {
+        await selectApp(appsCache[0].id);
+      } else {
+        const created = await createApp();
+        if (created) await selectApp(created.id);
+      }
+      closeSheet();
+    }
+
+    async function restoreAppPayload(app) {
+      const startedAt = performance.now();
+      const text = await decompressPayload(app);
+      const messages = parseMessages(text);
+      const duration = Math.round(performance.now() - startedAt);
+      if (app.archived) {
+        setStatus(`72시간 지난 최적화 대화를 복원했습니다. 복원 시간: ${duration}ms`, 'info');
+      }
+      if (duration > 5000) {
+        setStatus(`복원 시간 ${Math.ceil(duration / 1000)}초. 데이터가 커서 복원이 오래 걸렸습니다.`, 'warn');
+      }
+      return messages;
+    }
+
+    async function selectApp(id) {
+      const full = await dbGet(id);
+      if (!full) return;
+      currentAppId = id;
+      uiState.currentAppId = id;
+      writeJSON(UI_KEY, uiState);
+      updateCurrentAppHeader(full, true);
+      setStatus(full.archived ? '최적화된 오래된 대화를 복원하는 중입니다…' : '', 'info');
+      currentMessages = await restoreAppPayload(full);
+      full.lastOpenedAt = Date.now();
+      await dbPut(full);
+      await loadApps();
+      renderAppList();
+      renderHistory();
+      updateCurrentAppHeader();
+      if (window.innerWidth <= 980) closeSidebar();
+    }
+
+    function updateCurrentAppHeader(app = currentApp(), loading = false) {
+      if (!app) {
+        currentAppTitle.textContent = '앱 없음';
+        currentAppMeta.textContent = '새 앱을 만들거나 기존 앱을 선택하세요.';
+        return;
+      }
+      currentAppTitle.textContent = app.name;
+      currentAppMeta.textContent = loading
+        ? '대화를 불러오는 중…'
+        : `마지막 채팅 ${formatDate(app.updatedAt)} · 메시지 ${app.messageCount || 0}개${app.archived ? ' · 72시간 지난 최적화본' : ''}`;
+    }
+
+    function filterApps(query) {
+      const trimmed = query.trim().toLowerCase();
+      if (!trimmed) return appsCache;
+      return appsCache.filter((app) => {
+        const hay = [app.name, app.preview, app.searchText, dateSearchVariants(app.updatedAt)].join(' ').toLowerCase();
+        return hay.includes(trimmed);
+      });
+    }
+
+    function renderAppList() {
+      const list = filterApps(searchInput.value || '');
+      appCountValue.textContent = String(appsCache.length);
+      if (!list.length) {
+        appList.innerHTML = `<div class="empty-list">검색 결과가 없습니다.<br>앱 이름, 마지막 채팅 날짜(예: 2026-07-19 / 2026년 7월 19일), 대화 일부를 검색해 보세요.</div>`;
+        return;
+      }
+      appList.innerHTML = list.map((app) => {
+        const tags = [
+          `<span class="tag">${formatDateShort(app.updatedAt)}</span>`,
+          `<span class="tag">${app.messageCount || 0}개</span>`,
+          app.archived ? `<span class="tag archive">72h 최적화</span>` : '',
+          currentAppId === app.id ? `<span class="tag restore">현재</span>` : '',
+        ].join('');
+        return `
+          <button class="app-item ${currentAppId === app.id ? 'active' : ''}" type="button" data-app-id="${app.id}">
+            <div class="app-item-top">
+              <div class="app-item-title">${escapeHtml(app.name)}</div>
+            </div>
+            <div class="app-item-preview">${escapeHtml(app.preview || '아직 대화가 없습니다.')}</div>
+            <div class="app-item-meta">
+              ${tags}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      appList.querySelectorAll('[data-app-id]').forEach((button) => {
+        button.addEventListener('click', () => selectApp(button.dataset.appId));
+      });
+    }
+
+    function renderHistory() {
+      syncSettingsToForm();
+      Array.from(chatArea.querySelectorAll('.message')).forEach((node) => node.remove());
+      if (!currentMessages.length) {
+        emptyState.style.display = '';
+        return;
+      }
+      emptyState.style.display = 'none';
+      currentMessages.forEach((item) => {
+        const message = document.createElement('div');
+        message.className = 'message ' + item.role;
+        const wrap = document.createElement('div');
+        wrap.className = 'bubble-wrap';
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.textContent = item.role === 'user' ? '나' : 'AI';
+        const block = document.createElement('div');
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        if (item.pending) {
+          bubble.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+        } else {
+          bubble.innerHTML = escapeHtml(item.content || '');
+        }
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = (item.role === 'assistant' ? getActiveModel() : '사용자') + ' · ' + formatDate(item.time);
+        if (item.role === 'assistant' && !item.pending) {
+          const ttsBtn = document.createElement('button');
+          ttsBtn.type = 'button';
+          ttsBtn.className = 'tts-btn';
+          ttsBtn.title = '음성 재생';
+          ttsBtn.style = 'background:none; border:none; color:var(--muted-2); cursor:pointer; padding:0 6px; font-size:13px; margin-left:4px;';
+          ttsBtn.textContent = '🔊';
+          ttsBtn.addEventListener('click', () => {
+            triggerHaptic(20);
+            speakText(item.content);
+          });
+          meta.appendChild(ttsBtn);
+        }
+        block.appendChild(bubble);
+        block.appendChild(meta);
+        wrap.appendChild(avatar);
+        wrap.appendChild(block);
+        message.appendChild(wrap);
+        chatArea.appendChild(message);
+      });
+      scrollToBottom();
+    }
+
+    async function copyText(text, message) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setStatus(message || '복사했습니다.');
+      } catch {
+        setStatus('클립보드 복사에 실패했습니다.', 'error');
+      }
+    }
+
+    function downloadText(name, content) {
+      const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      hiddenDownload.href = url;
+      hiddenDownload.download = name;
+      hiddenDownload.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setStatus(`${name} 파일을 다운로드했습니다.`);
+    }
+
+    // --- MOBILE HELPER FUNCTIONS ---
+
+    function triggerHaptic(pattern) {
+      if (settings.hapticEnabled && navigator.vibrate) {
+        try {
+          navigator.vibrate(pattern);
+        } catch (e) {
+          console.warn('Haptic vibration failed:', e);
+        }
+      }
+    }
+
+    let currentSpeechUtterance = null;
+    function speakText(text) {
+      if (!window.speechSynthesis) {
+        setStatus('이 브라우저는 음성 합성(TTS)을 지원하지 않습니다.', 'warn');
+        return;
+      }
+      
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        if (currentSpeechUtterance && currentSpeechUtterance.text === text) {
+          currentSpeechUtterance = null;
+          setStatus('음성 재생을 중단했습니다.');
+          return;
+        }
+      }
+
+      // Strip markdown symbols and html tags
+      const cleanText = text
+        .replace(/<\/?[^>]+(>|$)/g, "")
+        .replace(/[\#\*\_`\[\]\(\)\-\+\=\:\.\,]/g, " ")
+        .trim();
+
+      if (!cleanText) return;
+
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'ko-KR';
+      
+      const voices = window.speechSynthesis.getVoices();
+      const koVoice = voices.find(voice => voice.lang.includes('ko') || voice.lang.includes('KO'));
+      if (koVoice) {
+        utterance.voice = koVoice;
+      }
+
+      utterance.onend = () => {
+        currentSpeechUtterance = null;
+      };
+      utterance.onerror = () => {
+        currentSpeechUtterance = null;
+      };
+
+      currentSpeechUtterance = utterance;
+      window.speechSynthesis.speak(utterance);
+      setStatus('음성을 재생하고 있습니다…');
+    }
+
+    function toggleSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        setStatus('이 브라우저는 음성 인식(STT)을 지원하지 않습니다. Chrome 등을 사용해 주세요.', 'warn');
+        return;
+      }
+
+      if (recognition) {
+        recognition.stop();
+        return;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        micBtn.classList.add('mic-btn-recording');
+        micBtn.title = '음성 인식 중 (누르면 정지)';
+        triggerHaptic(30);
+        setStatus('음성을 입력받고 있습니다. 말씀해 주세요…');
+      };
+
+      recognition.onresult = (event) => {
+        const resultText = event.results[0][0].transcript;
+        if (resultText) {
+          const originalText = promptInput.value;
+          promptInput.value = (originalText ? originalText + ' ' : '') + resultText;
+          promptInput.focus();
+          triggerHaptic([20, 20]);
+          setStatus('음성 인식 완료!');
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setStatus('음성 인식 오류: ' + event.error, 'error');
+        triggerHaptic([100, 50, 100]);
+      };
+
+      recognition.onend = () => {
+        micBtn.classList.remove('mic-btn-recording');
+        micBtn.title = '음성 인식 시작';
+        recognition = null;
+      };
+
+      recognition.start();
+    }
+
+    function handleImageAttachment(file) {
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        setStatus('이미지 파일만 첨부할 수 있습니다.', 'warn');
+        return;
+      }
+      if (file.size > 2.5 * 1024 * 1024) {
+        setStatus('이미지가 너무 큽니다. 2.5MB 이하의 이미지를 올려주세요.', 'warn');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        attachedImageBase64 = e.target.result;
+        renderImagePreview();
+        triggerHaptic(20);
+        setStatus('이미지가 첨부되었습니다.');
+      };
+      reader.onerror = () => {
+        setStatus('이미지를 읽는 중에 오류가 발생했습니다.', 'error');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderImagePreview() {
+      if (!attachedImageBase64) {
+        imagePreviewContainer.style.display = 'none';
+        imagePreviewContainer.innerHTML = '';
+        return;
+      }
+      imagePreviewContainer.style.display = 'flex';
+      imagePreviewContainer.innerHTML = `
+        <div class="image-preview-item">
+          <img src="${attachedImageBase64}" alt="첨부 이미지" />
+          <button class="remove-btn" type="button" onclick="clearImageAttachment()">✕</button>
+        </div>
+      `;
+    }
+
+    function clearImageAttachment() {
+      attachedImageBase64 = null;
+      imageInput.value = '';
+      renderImagePreview();
+      setStatus('첨부된 이미지를 삭제했습니다.');
+    }
+    window.clearImageAttachment = clearImageAttachment;
+
+    async function shareCurrentChat() {
+      const app = currentApp();
+      if (!app || !currentMessages.length) {
+        setStatus('공유할 대화 내역이 없습니다.', 'warn');
+        return;
+      }
+
+      let shareText = `[Infinite Chat App - ${app.name}]\n\n`;
+      currentMessages.forEach(msg => {
+        if (!msg.pending) {
+          const roleName = msg.role === 'user' ? '나' : 'AI';
+          shareText += `${roleName}: ${msg.content}\n\n`;
+        }
+      });
+
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: `Infinite - ${app.name}`,
+            text: shareText,
+          });
+          triggerHaptic(30);
+          setStatus('대화 내용을 공유했습니다.');
+        } catch (e) {
+          if (e.name !== 'AbortError') {
+            console.error('Share failed:', e);
+            setStatus('공유하기 오류가 발생했습니다.', 'error');
+          }
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(shareText);
+          triggerHaptic(30);
+          setStatus('이 브라우저는 공유 시트를 지원하지 않아 클립보드에 대화를 복사했습니다.');
+        } catch {
+          setStatus('대화 복사에 실패했습니다.', 'error');
+        }
+      }
+    }
+
+    function initInAppConsole() {
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+
+      function formatLogMsg(args) {
+        return args.map(arg => {
+          if (typeof arg === 'object') {
+            try { return JSON.stringify(arg); } catch { return String(arg); }
+          }
+          return String(arg);
+        }).join(' ');
+      }
+
+      console.log = (...args) => {
+        originalLog.apply(console, args);
+        appendInAppLog('[LOG] ' + formatLogMsg(args));
+      };
+
+      console.error = (...args) => {
+        originalError.apply(console, args);
+        appendInAppLog('[ERROR] ' + formatLogMsg(args), '#f87171');
+      };
+
+      console.warn = (...args) => {
+        originalWarn.apply(console, args);
+        appendInAppLog('[WARN] ' + formatLogMsg(args), '#fef08a');
+      };
+    }
+
+    function appendInAppLog(message, color = '') {
+      inAppLogs.push({ text: message, color, time: Date.now() });
+      if (inAppLogs.length > 100) inAppLogs.shift();
+      renderInAppLogs();
+    }
+
+    function renderInAppLogs() {
+      if (!debugConsoleLog) return;
+      debugConsoleLog.innerHTML = inAppLogs.map(log => {
+        const style = log.color ? ` style="color: ${log.color}"` : '';
+        const timeStr = new Date(log.time).toTimeString().split(' ')[0];
+        return `<div${style}>[${timeStr}] ${escapeHtml(log.text)}</div>`;
+      }).join('');
+      debugConsoleLog.scrollTop = debugConsoleLog.scrollHeight;
+    }
+
+    async function exportAllData() {
+      try {
+        const apps = await dbGetAll();
+        const settingsPayload = readJSON(SETTINGS_KEY, settings);
+        const backupData = {
+          version: 'infinite-v2-backup',
+          timestamp: Date.now(),
+          settings: settingsPayload,
+          apps: apps
+        };
+
+        const json = JSON.stringify(backupData, null, 2);
+        downloadText(`infinite-backup-${formatDateShort(Date.now())}.json`, json);
+        triggerHaptic(30);
+      } catch (e) {
+        console.error('Backup failed:', e);
+        setStatus('데이터 백업 실패: ' + e.message, 'error');
+        triggerHaptic([100, 50, 100]);
+      }
+    }
+
+    async function importAllData(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.version !== 'infinite-v2-backup' || !Array.isArray(parsed.apps)) {
+            throw new Error('올바른 백업 형식이 아니거나 데이터가 손상되었습니다.');
+          }
+
+          if (!confirm('백업 데이터를 불러오면 기존에 저장된 모든 대화와 설정이 지워지고 덮어써집니다. 계속할까요?')) {
+            return;
+          }
+
+          const currentApps = await dbGetAll();
+          for (const app of currentApps) {
+            await dbDelete(app.id);
+          }
+
+          for (const app of parsed.apps) {
+            await dbPut(app);
+          }
+
+          if (parsed.settings) {
+            settings = { ...initialSettings, ...parsed.settings };
+            writeJSON(SETTINGS_KEY, settings);
+          }
+
+          await loadApps();
+          currentAppId = appsCache[0]?.id || null;
+          if (currentAppId) {
+            await selectApp(currentAppId);
+          } else {
+            const created = await createApp();
+            if (created) await selectApp(created.id);
+          }
+
+          renderAppList();
+          syncSettingsToForm();
+          triggerHaptic([30, 30]);
+          setStatus('데이터 복원이 완료되었습니다!');
+          closeSheet();
+        } catch (err) {
+          console.error('Import failed:', err);
+          setStatus('데이터 복원 실패: ' + err.message, 'error');
+          triggerHaptic([100, 50, 100]);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    async function saveSettingsFromForm() {
+      const enteredCustomModel = customModelInput.value.trim();
+      const enteredKey = apiKeyInput.value.trim();
+      let customModels = normalizeCustomModels(settings.customModels || []);
+      if (enteredCustomModel && !BUILTIN_MODELS.includes(enteredCustomModel) && !customModels.includes(enteredCustomModel)) {
+        if (customModels.length < MAX_CUSTOM_MODELS) {
+          customModels = normalizeCustomModels([enteredCustomModel, ...customModels]);
+        } else {
+          setStatus(`사용자 추가 모델은 최대 ${MAX_CUSTOM_MODELS}개까지 저장할 수 있습니다.`, 'warn');
+        }
+      }
+      settings = {
+        ...settings,
+        apiKey: enteredKey || settings.apiKey || '',
+        model: modelSelect.value,
+        customModel: enteredCustomModel,
+        customModels,
+        systemPrompt: systemPromptInput.value.trim(),
+        hapticEnabled: hapticToggle.checked,
+        ttsAutoRead: ttsAutoToggle.checked,
+      };
+      writeJSON(SETTINGS_KEY, settings);
+      syncSettingsToForm();
+      setStatus(enteredKey ? '새 API 키와 설정을 저장했습니다.' : '기존 API 키를 유지한 채 설정을 저장했습니다.');
+      closeSheet();
+    }
+
+    function buildMessagesForRequest() {
+      const result = [];
+      const systemPrompt = (settings.systemPrompt || '').trim() || DEFAULT_SYSTEM_PROMPT;
+      result.push({ role: 'system', content: systemPrompt });
+      
+      const activeMsgs = currentMessages.filter((item) => !item.pending);
+      activeMsgs.forEach((item, idx) => {
+        if (idx === activeMsgs.length - 1 && attachedImageBase64) {
+          result.push({
+            role: item.role,
+            content: [
+              { type: 'text', text: item.content },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: attachedImageBase64
+                }
+              }
+            ]
+          });
+        } else {
+          result.push({ role: item.role, content: item.content });
+        }
+      });
+      return result;
+    }
+
+    async function verifyApiKey(candidate) {
+      const key = String(candidate || '').trim();
+      if (!key) {
+        setStatus('확인할 API 키가 없습니다.', 'warn');
+        return false;
+      }
+      const originalText = verifyKeyBtn.textContent;
+      verifyKeyBtn.disabled = true;
+      verifyKeyBtn.textContent = '확인 중…';
+      try {
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + key,
+            'HTTP-Referer': location.href,
+            'X-Title': 'Infinite'
+          },
+          body: JSON.stringify({
+            model: DEFAULT_MODEL,
+            messages: [{ role: 'user', content: 'ping' }],
+            max_tokens: 1
+          }),
+        });
+        const json = await response.json().catch(() => ({}));
+        if (response.ok) {
+          setStatus('OpenRouter API 키 확인 완료: 유효한 키입니다.');
+          return true;
+        }
+        if (response.status === 401) {
+          setStatus('키 확인 실패: 유효하지 않거나 만료된 OpenRouter 키입니다.', 'error');
+          return false;
+        }
+        if (response.status === 402) {
+          setStatus('키는 인식되지만 사용 가능한 크레딧이 부족합니다.', 'warn');
+          return true;
+        }
+        const message = json?.error?.message || json?.message || `키 확인 실패 (${response.status})`;
+        setStatus(message, 'error');
+        return false;
+      } catch (error) {
+        setStatus('키 확인 중 네트워크 오류가 발생했습니다.', 'error');
+        return false;
+      } finally {
+        verifyKeyBtn.disabled = false;
+        verifyKeyBtn.textContent = originalText;
+      }
+    }
+
+    async function sendMessage() {
+      if (sending) return;
+      let app = currentApp();
+      if (!app) {
+        const created = await createApp();
+        if (!created) {
+          setStatus('앱을 만들 수 없어 전송을 시작하지 못했습니다.', 'warn');
+          return;
+        }
+        await selectApp(created.id);
+        app = currentApp();
+        if (!app) {
+          currentAppId = created.id;
+          currentMessages = [];
+          appsCache = [created, ...appsCache.filter((item) => item.id !== created.id)];
+          renderAppList();
+          renderHistory();
+          updateCurrentAppHeader(created);
+          app = created;
+        }
+      }
+      const text = promptInput.value.trim();
+      if (!text && !attachedImageBase64) return;
+      if (!settings.apiKey) {
+        showError('먼저 설정에서 OpenRouter API 키를 저장해 주세요.');
+        openSheet();
+        return;
+      }
+
+      showError('');
+      setStatus('');
+      sending = true;
+      sendBtn.disabled = true;
+      triggerHaptic(15);
+
+      const now = Date.now();
+      const userMessage = { role: 'user', content: text || '이미지 분석 요청', time: now };
+      const pendingMessage = { role: 'assistant', content: '', time: now + 1, pending: true };
+      currentMessages = [...currentMessages, userMessage, pendingMessage];
+      renderHistory();
+      promptInput.value = '';
+
+      try {
+        const activeModel = getActiveModel();
+        const requestBody = {
+          model: activeModel,
+          messages: buildMessagesForRequest(),
+        };
+        if (activeModel === DEFAULT_MODEL) {
+          requestBody.plugins = [{ id: 'auto-router', cost_quality_tradeoff: 4 }];
+        }
+
+        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + settings.apiKey,
+            'HTTP-Referer': location.href,
+            'X-Title': 'Infinite'
+          },
+          body: JSON.stringify(requestBody),
+        });
+
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          const message = json?.error?.message || json?.message || 'OpenRouter 요청에 실패했습니다.';
+          throw new Error(message);
+        }
+
+        const content = json?.choices?.[0]?.message?.content;
+        const textContent = typeof content === 'string'
+          ? content
+          : Array.isArray(content)
+            ? content.map((item) => typeof item === 'string' ? item : item?.text || '').join('\n')
+            : '응답을 읽을 수 없습니다.';
+
+        currentMessages = currentMessages.map((item) => item.pending ? { role: 'assistant', content: textContent, time: Date.now() } : item);
+        const updated = await persistApp(app, currentMessages, { forcePlain: true });
+        currentAppId = updated.id;
+        renderHistory();
+        renderAppList();
+        updateCurrentAppHeader(updated);
+        
+        clearImageAttachment();
+        triggerHaptic(35);
+        if (settings.ttsAutoRead) {
+          speakText(textContent);
+        }
+      } catch (error) {
+        currentMessages = currentMessages.filter((item) => !item.pending);
+        renderHistory();
+        showError(error?.message || '대화 요청 중 오류가 발생했습니다.');
+        triggerHaptic([100, 50, 100]);
+      } finally {
+        sending = false;
+        sendBtn.disabled = false;
+      }
+    }
+
+    async function optimizeStaleApps() {
+      const stale = appsCache.filter((app) => !app.archived && shouldArchive(app) && app.payloadType === 'json');
+      for (const app of stale) {
+        const messages = parseMessages(app.payload || '[]');
+        await persistApp(app, messages, { keepUpdatedAt: true });
+      }
+      if (stale.length) {
+        await loadApps();
+        renderAppList();
+        updateCurrentAppHeader();
+      }
+    }
+
+    function detectDevice() {
+      const ua = navigator.userAgent || '';
+      const platform = navigator.platform || '';
+      const lower = ua.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(lower) || (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isAndroid = /android/.test(lower);
+      const isWindows = /win/.test(lower);
+      const isMac = /mac/.test(lower) && !isIOS;
+      const isLinux = /linux/.test(lower) && !isAndroid;
+      const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+      if (standalone) {
+        devicePill.textContent = '앱 모드 실행 중';
+        installBtn.textContent = '설치됨';
+        installBtn.disabled = true;
+        return;
+      }
+      if (isIOS) {
+        devicePill.textContent = 'iPhone / iPad · 무료 앱 5개';
+      } else if (isAndroid) {
+        devicePill.textContent = 'Android · 무료 앱 5개';
+      } else if (isWindows) {
+        devicePill.textContent = 'Windows · 최대 1000개';
+      } else if (isMac) {
+        devicePill.textContent = 'macOS · 최대 1000개';
+      } else if (isLinux) {
+        devicePill.textContent = 'Linux · 최대 1000개';
+      } else {
+        devicePill.textContent = '브라우저 환경';
+      }
+    }
+
+    async function bootstrap() {
+      initInAppConsole();
+      syncSettingsToForm();
+      detectDevice();
+      sendBtn.disabled = false;
+      await loadApps();
+
+      if (!appsCache.length) {
+        const created = await createApp();
+        if (created) uiState.currentAppId = created.id;
+      }
+
+      await loadApps();
+      currentAppId = appsCache.find((item) => item.id === uiState.currentAppId)?.id || appsCache[0]?.id || null;
+      renderAppList();
+
+      if (currentAppId) {
+        await selectApp(currentAppId);
+      }
+
+      if (!currentApp() && appsCache[0]) {
+        currentAppId = appsCache[0].id;
+        currentMessages = parseMessages(appsCache[0].payload || '[]');
+        renderHistory();
+        updateCurrentAppHeader(appsCache[0]);
+      }
+
+      optimizeStaleApps().catch(() => {});
+    }
+
+    window.addEventListener('beforeinstallprompt', (event) => {
+      event.preventDefault();
+      deferredPrompt = event;
+      installBtn.disabled = false;
+      installBtn.textContent = '앱 설치';
+    });
+
+    installBtn.addEventListener('click', async () => {
+      const ua = navigator.userAgent.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        alert('Safari에서 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 설치됩니다.');
+        return;
+      }
+      if (!deferredPrompt) {
+        alert('이 브라우저에서는 자동 설치 프롬프트를 바로 사용할 수 없어요. Chrome/Android 또는 지원 브라우저에서 열어보세요.');
+        return;
+      }
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if (choice?.outcome === 'accepted') {
+        installBtn.textContent = '설치 진행 중';
+      }
+    });
+
+    window.addEventListener('appinstalled', () => {
+      installBtn.textContent = '설치됨';
+      installBtn.disabled = true;
+      devicePill.textContent = '앱 모드 실행 가능';
+    });
+
+    document.querySelectorAll('[data-prompt]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        if (!currentAppId) {
+          const created = await createApp();
+          if (created) await selectApp(created.id);
+        }
+        promptInput.value = button.dataset.prompt || '';
+        promptInput.focus();
+      });
+    });
+
+    promptInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // --- Mobile Event Listeners ---
+    attachBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageAttachment(e.target.files[0]);
+      }
+    });
+    micBtn.addEventListener('click', toggleSpeechRecognition);
+    shareChatBtn.addEventListener('click', shareCurrentChat);
+    exportDataBtn.addEventListener('click', exportAllData);
+    importDataBtn.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        importAllData(e.target.files[0]);
+      }
+    });
+    clearLogsBtn.addEventListener('click', () => {
+      inAppLogs = [];
+      renderInAppLogs();
+      setStatus('디버깅 콘솔 로그를 비웠습니다.');
+    });
+
+    createAppBtn.addEventListener('click', async () => {
+      const created = await createApp();
+      if (created) {
+        await selectApp(created.id);
+        setStatus(`새 앱 '${created.name}'을 만들었습니다. (${limitText()})`);
+      }
+    });
+    openSidebarBtn.addEventListener('click', openSidebar);
+    mobileSidebarBackdrop.addEventListener('click', closeSidebar);
+    searchInput.addEventListener('input', renderAppList);
+    renameAppBtn.addEventListener('click', renameCurrentApp);
+    newChatBtn.addEventListener('click', clearCurrentChat);
+    openSettingsBtn.addEventListener('click', openSheet);
+    closeSettingsBtn.addEventListener('click', closeSheet);
+    sheetBackdrop.addEventListener('click', closeSheet);
+    modelSelect.addEventListener('change', () => {
+      if (modelSelect.value === DEFAULT_MODEL && !customModelInput.value.trim()) {
+        setStatus('오토라우터를 기본 모델로 선택했습니다. 저장하면 적용됩니다.');
+      } else if (!customModelInput.value.trim()) {
+        setStatus(`'${modelSelect.value}' 기본 모델을 선택했습니다. 저장하면 적용됩니다.`);
+      }
+      renderModelSuggestions();
+    });
+    customModelInput.addEventListener('input', () => renderModelSuggestions());
+    customModelInput.addEventListener('focus', () => renderModelSuggestions());
+    customModelInput.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      const query = customModelInput.value.trim();
+      if (!query) return;
+      const exactBuiltIn = getModelPool().find((item) => item.toLowerCase() === query.toLowerCase());
+      if (exactBuiltIn) {
+        if (BUILTIN_MODELS.includes(exactBuiltIn)) {
+          modelSelect.value = exactBuiltIn;
+          customModelInput.value = '';
+          settings.customModel = '';
+          setStatus(`'${exactBuiltIn}' 기본 모델을 선택했습니다. 저장하면 적용됩니다.`);
+          renderModelSuggestions('');
+          return;
+        }
+        customModelInput.value = exactBuiltIn;
+        setStatus(`'${exactBuiltIn}' 추가 모델을 선택했습니다. 저장하면 적용됩니다.`);
+        renderModelSuggestions(exactBuiltIn);
+        return;
+      }
+      addCustomModel(query, true);
+    });
+    useAutoRouterBtn.addEventListener('click', () => {
+      modelSelect.value = DEFAULT_MODEL;
+      customModelInput.value = '';
+      settings.customModel = '';
+      renderModelSuggestions();
+      setStatus('오토라우터를 기본값으로 선택했습니다. 저장하면 적용됩니다.');
+    });
+    saveSettingsBtn.addEventListener('click', saveSettingsFromForm);
+    verifyKeyBtn.addEventListener('click', async () => {
+      const keyToCheck = apiKeyInput.value.trim() || settings.apiKey || '';
+      await verifyApiKey(keyToCheck);
+    });
+    clearKeyBtn.addEventListener('click', () => {
+      if (!settings.apiKey) {
+        setStatus('삭제할 저장 키가 없습니다.', 'warn');
+        return;
+      }
+      if (!confirm('저장된 OpenRouter 키를 삭제할까요?')) return;
+      settings.apiKey = '';
+      writeJSON(SETTINGS_KEY, settings);
+      syncSettingsToForm();
+      setStatus('저장된 API 키를 삭제했습니다.');
+    });
+    clearAppBtn.addEventListener('click', deleteCurrentApp);
+    copyModelBtn.addEventListener('click', () => copyText(getActiveModel(), '현재 모델을 복사했습니다.'));
+    copyConfigBtn.addEventListener('click', () => copyText(DEFAULT_CONFIG, '기본 설정을 복사했습니다.'));
+    downloadConfigBtn.addEventListener('click', () => downloadText('opencode.jsonc', DEFAULT_CONFIG));
+    sendBtn.addEventListener('click', sendMessage);
+
+    window.addEventListener('resize', () => {
+      syncSettingsToForm();
+      renderAppList();
+      if (window.innerWidth > 980) closeSidebar();
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    bootstrap().catch((error) => {
+      sendBtn.disabled = false;
+      setStatus('초기화 중 오류가 발생했습니다: ' + (error?.message || '알 수 없음') + ' · fallback 모드로 다시 시도하세요.', 'error');
+    });
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1d94f834f453514',t:'MTc4NDQ1OTc1MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
