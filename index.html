@@ -49,10 +49,12 @@
     .app {
       width: min(1280px, calc(100% - 16px));
       margin: 8px auto;
-      min-height: calc(100vh - 16px);
+      height: calc(100vh - 16px);
+      max-height: calc(100vh - 16px);
       display: grid;
       grid-template-columns: 320px minmax(0, 1fr);
       gap: 12px;
+      overflow: hidden;
     }
     .panel {
       border: 1px solid var(--line);
@@ -68,7 +70,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      min-height: calc(100vh - 16px);
+      height: 100%;
     }
     .sidebar-head {
       padding: 18px;
@@ -758,6 +760,9 @@
       .app {
         width: min(100% - 12px, 1280px);
         grid-template-columns: 1fr;
+        height: calc(100vh - 12px);
+        max-height: calc(100vh - 12px);
+        overflow: hidden;
       }
       .sidebar {
         position: fixed;
@@ -766,7 +771,7 @@
         transform: translateX(-108%);
         transition: transform .22s ease;
         z-index: 60;
-        min-height: calc(100vh - 12px);
+        height: calc(100vh - 12px);
       }
       .sidebar.open { transform: translateX(0); }
       .mobile-sidebar-backdrop {
